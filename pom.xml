@@ -25,7 +25,7 @@
         <dependency>
             <groupId>io.github.kimmking</groupId>
             <artifactId>kkrpc-core</artifactId>
-            <version>0.0.6-SNAPSHOT</version>
+            <version>0.0.6</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
