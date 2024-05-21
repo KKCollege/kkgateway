@@ -1,0 +1,9 @@
+spring:
+    application:
+        name: kkgateway
+
+server:
+  port: 8888
+
+kkregistry:
+  servers: http://localhost:8484
