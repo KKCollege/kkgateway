@@ -1,9 +1,14 @@
 spring:
-    application:
-        name: kkgateway
+  application:
+    name: kkgateway
+#  main:
+#    allow-bean-definition-overriding: true
 
 server:
   port: 8888
 
 kkregistry:
   servers: http://localhost:8484
+
+application:
+  version: v1.0.0

@@ -1,13 +1,14 @@
 ### GET hello
 GET http://localhost:8888/hello
 
-### GET gw 1
-GET http://localhost:8888/gw
+### GET info
+GET http://localhost:8888/info
 
-
+### GET h
+GET http://localhost:8888/g
 
 ### POST user
-POST http://localhost:8888/gw/cn.kimmking.kkrpc.demo.api.UserService
+POST http://localhost:8888/ga/cn.kimmking.kkrpc.demo.api.UserService
 Content-Type: application/json
 
 {
