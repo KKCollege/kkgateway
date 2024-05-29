@@ -1,5 +1,6 @@
 package cn.kimmking.gateway.web.handler;
 
+import cn.kimmking.gateway.DefaultGatewayPluginChain;
 import cn.kimmking.gateway.GatewayPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,17 +33,19 @@ public class GatewayWebHandler implements WebHandler {
                     .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(mock.getBytes())));
         }
 
-        for(GatewayPlugin plugin : plugins) {
-            if(plugin.support(exchange)) {
-                return plugin.handle(exchange);
-            }
-        }
+        return new DefaultGatewayPluginChain(plugins).handle(exchange);
 
-        String mock = """
-                    {"result":"no supported plugin"}
-                    """;
-        return exchange.getResponse()
-                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(mock.getBytes())));
+//        for(GatewayPlugin plugin : plugins) {
+//            if(plugin.support(exchange)) {
+//                return plugin.handle(exchange);
+//            }
+//        }
+
+//        String mock = """
+//                    {"result":"no supported plugin"}
+//                    """;
+//        return exchange.getResponse()
+//                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(mock.getBytes())));
 
     }
 }

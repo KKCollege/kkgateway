@@ -1,6 +1,7 @@
 package cn.kimmking.gateway.plugin;
 
 import cn.kimmking.gateway.AbstractGatewayPlugin;
+import cn.kimmking.gateway.GatewayPluginChain;
 import cn.kimmking.kkrpc.core.api.LoadBalancer;
 import cn.kimmking.kkrpc.core.api.RegistryCenter;
 import cn.kimmking.kkrpc.core.cluster.RoundRibonLoadBalancer;
@@ -34,7 +35,7 @@ public class KKRpcPlugin extends AbstractGatewayPlugin {
     LoadBalancer<InstanceMeta> loadBalancer = new RoundRibonLoadBalancer<>();
 
     @Override
-    public Mono<Void> doHandle(ServerWebExchange exchange) {
+    public Mono<Void> doHandle(ServerWebExchange exchange, GatewayPluginChain chain) {
         System.out.println("=======>>>>>>> [KKRpcPlugin] ...");
 
         String service = exchange.getRequest().getPath().value().substring(prefix.length());
@@ -64,7 +65,8 @@ public class KKRpcPlugin extends AbstractGatewayPlugin {
         exchange.getResponse().getHeaders().add("kk.gw.version", "v1.0.0");
         exchange.getResponse().getHeaders().add("kk.gw.plugin", getName());
         return body.flatMap(x->exchange.getResponse()
-                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(x.getBytes()))));
+                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(x.getBytes()))))
+                .then(chain.handle(exchange));
 
     }
 
