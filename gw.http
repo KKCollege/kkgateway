@@ -2,12 +2,12 @@
 GET http://localhost:8888/hello
 
 ### GET gw 1
-GET http://localhost:8888/ga/aaa
+GET http://localhost:8888/gw/aaa
 
 
 
-### POST user
-POST http://localhost:8888/ga/cn.kimmking.kkrpc.demo.api.UserService
+### POST kkrpc user
+POST http://localhost:8888/gw/kkrpc/cn.kimmking.kkrpc.demo.api.UserService
 Content-Type: application/json
 
 {
@@ -16,5 +16,14 @@ Content-Type: application/json
   "args":[100]
 }
 
+### POST direct
+POST http://localhost:8888/gw/direct/cn.kimmking.kkrpc.demo.api.UserService
+Content-Type: application/json
+
+{
+  "service":"cn.kimmking.kkrpc.demo.api.UserService",
+  "methodSign":"findById@1_int",
+  "args":[100]
+}
 
 

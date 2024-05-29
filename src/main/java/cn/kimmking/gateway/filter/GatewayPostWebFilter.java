@@ -1,4 +1,4 @@
-package cn.kimmking.gateway;
+package cn.kimmking.gateway.filter;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
