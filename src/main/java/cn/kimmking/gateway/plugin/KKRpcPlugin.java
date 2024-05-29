@@ -1,38 +1,43 @@
-package cn.kimmking.gateway;
+package cn.kimmking.gateway.plugin;
 
+import cn.kimmking.gateway.AbstractGatewayPlugin;
 import cn.kimmking.kkrpc.core.api.LoadBalancer;
 import cn.kimmking.kkrpc.core.api.RegistryCenter;
 import cn.kimmking.kkrpc.core.cluster.RoundRibonLoadBalancer;
 import cn.kimmking.kkrpc.core.meta.InstanceMeta;
 import cn.kimmking.kkrpc.core.meta.ServiceMeta;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 /**
- * gateway handler.
+ * kk rpc gateway plugin.
  *
  * @Author : kimmking(kimmking@apache.org)
- * @create 2024/5/21 下午8:42
+ * @create 2024/5/29 下午8:22
  */
-@Component
-public class GatewayHandler {
+@Component("kkrpc")
+public class KKRpcPlugin extends AbstractGatewayPlugin {
+    public static final String NAME = "kkrpc";
+    private String prefix = GATEWAY_PREFIX + "/" + NAME + "/";
 
     @Autowired
     RegistryCenter rc;
 
     LoadBalancer<InstanceMeta> loadBalancer = new RoundRibonLoadBalancer<>();
 
-    Mono<ServerResponse> handle(ServerRequest request) {
-        // 1. 通过请求路径或者服务名
-        String service = request.path().substring(4);
+    @Override
+    public Mono<Void> doHandle(ServerWebExchange exchange) {
+        System.out.println("=======>>>>>>> [KKRpcPlugin] ...");
+
+        String service = exchange.getRequest().getPath().value().substring(prefix.length());
         ServiceMeta serviceMeta = ServiceMeta.builder().name(service)
                 .app("app1").env("dev").namespace("public").build();
         // 2. 通过rc拿到所有活着的服务实例
@@ -44,24 +49,32 @@ public class GatewayHandler {
         String url = instanceMeta.toUrl();
 
         // 4. 拿到请求的报文
-        Mono<String> requestMono = request.bodyToMono(String.class);
-        return requestMono.flatMap( x -> invokeFromRegistry(x, url));
-    }
+        Flux<DataBuffer> requestBody = exchange.getRequest().getBody();
 
-    private static @NotNull Mono<ServerResponse> invokeFromRegistry(String x, String url) {
         // 5. 通过webclient发送post请求
         WebClient client = WebClient.create(url);
         Mono<ResponseEntity<String>> entity = client.post()
                 .header("Content-Type", "application/json")
-                .bodyValue(x).retrieve().toEntity(String.class);
+                .body(requestBody, DataBuffer.class).retrieve().toEntity(String.class);
         // 6. 通过entity获取响应报文
         Mono<String> body = entity.map(ResponseEntity::getBody);
-        body.subscribe(souce -> System.out.println("response:" + souce));
+        // body.subscribe(souce -> System.out.println("response:" + souce));
         // 7. 组装响应报文
-        return ServerResponse.ok()
-                .header("Content-Type", "application/json")
-                .header("kk.gw.version", "v1.0.0")
-                .body(body, String.class);
+        exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+        exchange.getResponse().getHeaders().add("kk.gw.version", "v1.0.0");
+        exchange.getResponse().getHeaders().add("kk.gw.plugin", getName());
+        return body.flatMap(x->exchange.getResponse()
+                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(x.getBytes()))));
+
     }
 
+    @Override
+    public boolean doSupport(ServerWebExchange exchange) {
+        return exchange.getRequest().getPath().value().startsWith(prefix);
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 }
